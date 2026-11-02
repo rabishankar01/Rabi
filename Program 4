@@ -1,0 +1,174 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+ 
+struct Node
+{
+    char USN[15];
+    char Name[30];
+    struct Node *next;
+};
+ 
+struct Node *head = NULL;
+ 
+/* Create list using FRONT insertion */
+void createFront()
+{
+    int n, i;
+    printf("Enter number of students: ");
+    scanf("%d", &n);
+    for (i = 0; i < n; i++)
+    {
+        struct Node *newNode = (struct Node *) malloc(sizeof(struct Node));
+        printf("Enter USN for student %d: ", i + 1);
+        scanf("%s", newNode->USN);
+        printf("Enter Name for student %d: ", i + 1);
+        scanf("%s", newNode->Name);
+        newNode->next = head;
+        head = newNode;
+    }
+    printf("Linked list created using front insertion.\n");
+}
+ 
+void displayAndCount()
+{
+    struct Node *p = head;
+    int count = 0;
+    if (head == NULL)
+    {
+        printf("List is empty.\n");
+        return;
+    }
+    printf("\n%-15s%-20s\n", "USN", "Name");
+    printf("--------------------------------\n");
+    while (p != NULL)
+    {
+        printf("%-15s%-20s\n", p->USN, p->Name);
+        count++;
+        p = p->next;
+    }
+    printf("Total number of nodes: %d\n", count);
+}
+ 
+void insertBeginning()
+{
+    struct Node *newNode = (struct Node *) malloc(sizeof(struct Node));
+    printf("Enter USN: ");
+    scanf("%s", newNode->USN);
+    printf("Enter Name: ");
+    scanf("%s", newNode->Name);
+    newNode->next = head;
+    head = newNode;
+    printf("Node inserted at beginning.\n");
+}
+ 
+void insertEnd()
+{
+    struct Node *newNode = (struct Node *) malloc(sizeof(struct Node));
+    printf("Enter USN: ");
+    scanf("%s", newNode->USN);
+    printf("Enter Name: ");
+    scanf("%s", newNode->Name);
+    newNode->next = NULL;
+ 
+    if (head == NULL)
+    {
+        head = newNode;
+        return;
+    }
+    struct Node *p = head;
+    while (p->next != NULL)
+        p = p->next;
+    p->next = newNode;
+    printf("Node inserted at end.\n");
+}
+ 
+void deleteBeginning()
+{
+    if (head == NULL)
+    {
+        printf("List is empty. Nothing to delete.\n");
+        return;
+    }
+    struct Node *temp = head;
+    head = head->next;
+    printf("Deleted node with USN: %s\n", temp->USN);
+    free(temp);
+}
+ 
+void deleteEnd()
+{
+    if (head == NULL)
+    {
+        printf("List is empty. Nothing to delete.\n");
+        return;
+    }
+    if (head->next == NULL)
+    {
+        printf("Deleted node with USN: %s\n", head->USN);
+        free(head);
+        head = NULL;
+        return;
+    }
+    struct Node *p = head;
+    while (p->next->next != NULL)
+        p = p->next;
+    printf("Deleted node with USN: %s\n", p->next->USN);
+    free(p->next);
+    p->next = NULL;
+}
+ 
+void searchUSN()
+{
+    char key[15];
+    int pos = 1;
+    printf("Enter USN to search: ");
+    scanf("%s", key);
+    struct Node *p = head;
+    while (p != NULL)
+    {
+        if (strcmp(p->USN, key) == 0)
+        {
+            printf("Record found at position %d -> USN: %s, Name: %s\n", pos, p->USN, p->Name);
+            return;
+        }
+        p = p->next;
+        pos++;
+    }
+    printf("USN %s not found in the list.\n", key);
+}
+ 
+int main()
+{
+    int choice, sub;
+    do
+    {
+        printf("\n----- SINGLY LINKED LIST OF STUDENT RECORDS -----\n");
+        printf("1. Create linked list using front insertion\n");
+        printf("2. Display all records and count nodes\n");
+        printf("3. Insert / Delete at beginning or end\n");
+        printf("4. Search for a student record using USN\n");
+        printf("5. Exit\n");
+        printf("Enter your choice: ");
+        scanf("%d", &choice);
+ 
+        switch (choice)
+        {
+            case 1: createFront(); break;
+            case 2: displayAndCount(); break;
+            case 3:
+                printf("1.Insert Beginning 2.Insert End 3.Delete Beginning 4.Delete End\nChoice: ");
+                scanf("%d", &sub);
+                if (sub == 1) insertBeginning();
+                else if (sub == 2) insertEnd();
+                else if (sub == 3) deleteBeginning();
+                else if (sub == 4) deleteEnd();
+                else printf("Invalid sub-choice.\n");
+                break;
+            case 4: searchUSN(); break;
+            case 5: printf("Exiting...\n"); break;
+            default: printf("Invalid choice!\n");
+        }
+    } while (choice != 5);
+    return 0;
+}
