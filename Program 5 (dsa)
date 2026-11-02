@@ -1,0 +1,137 @@
+#include <stdio.h>
+#include <stdlib.h>
+ 
+struct Node
+{
+    int data;
+    struct Node *left, *right;
+};
+ 
+struct Node *root = NULL;
+ 
+/* Queue used only to build the tree in level order */
+struct Node *queueArr[100];
+int qFront = 0, qRear = -1;
+ 
+void enqueue(struct Node *n)
+{
+    queueArr[++qRear] = n;
+}
+struct Node *dequeue()
+{
+    return queueArr[qFront++];
+}
+int isQueueEmpty()
+{
+    return qFront > qRear;
+}
+ 
+struct Node *createNode(int val)
+{
+    struct Node *newNode = (struct Node *) malloc(sizeof(struct Node));
+    newNode->data = val;
+    newNode->left = newNode->right = NULL;
+    return newNode;
+}
+ 
+void createTree()
+{
+    int n, i, val;
+    root = NULL;
+    qFront = 0; qRear = -1;
+    printf("Enter number of elements to insert into the Binary Tree: ");
+    scanf("%d", &n);
+ 
+    for (i = 0; i < n; i++)
+    {
+        printf("Enter element %d: ", i + 1);
+        scanf("%d", &val);
+        struct Node *newNode = createNode(val);
+ 
+        if (root == NULL)
+        {
+            root = newNode;
+            enqueue(root);
+            continue;
+        }
+ 
+        struct Node *front = queueArr[qFront];
+        if (front->left == NULL)
+        {
+            front->left = newNode;
+        }
+        else if (front->right == NULL)
+        {
+            front->right = newNode;
+            qFront++;   /* this node is now full, move to next */
+        }
+        enqueue(newNode);
+    }
+    printf("Binary tree created successfully in level order.\n");
+}
+ 
+void preorder(struct Node *t)
+{
+    if (t != NULL)
+    {
+        printf("%d ", t->data);
+        preorder(t->left);
+        preorder(t->right);
+    }
+}
+ 
+void inorder(struct Node *t)
+{
+    if (t != NULL)
+    {
+        inorder(t->left);
+        printf("%d ", t->data);
+        inorder(t->right);
+    }
+}
+ 
+void postorder(struct Node *t)
+{
+    if (t != NULL)
+    {
+        postorder(t->left);
+        postorder(t->right);
+        printf("%d ", t->data);
+    }
+}
+ 
+int main()
+{
+    int choice;
+    do
+    {
+        printf("\n----- BINARY TREE (Level Order Creation) -----\n");
+        printf("1. Create Binary Tree\n");
+        printf("2. Display Preorder Traversal\n");
+        printf("3. Display Inorder Traversal\n");
+        printf("4. Display Postorder Traversal\n");
+        printf("5. Exit\n");
+        printf("Enter your choice: ");
+        scanf("%d", &choice);
+ 
+        switch (choice)
+        {
+            case 1: createTree(); break;
+            case 2:
+                if (root == NULL) { printf("Tree is empty!\n"); break; }
+                printf("Preorder  : "); preorder(root); printf("\n");
+                break;
+            case 3:
+                if (root == NULL) { printf("Tree is empty!\n"); break; }
+                printf("Inorder   : "); inorder(root); printf("\n");
+                break;
+            case 4:
+                if (root == NULL) { printf("Tree is empty!\n"); break; }
+                printf("Postorder : "); postorder(root); printf("\n");
+                break;
+            case 5: printf("Exiting...\n"); break;
+            default: printf("Invalid choice!\n");
+        }
+    } while (choice != 5);
+    return 0;
+}
