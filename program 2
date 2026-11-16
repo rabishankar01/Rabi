@@ -1,0 +1,240 @@
+#include <stdio.h>
+#define MAX 50
+
+struct Term
+{
+    int row, col, val;
+};
+
+/* Index 0 is the header tuple: row = no. of rows, col = no. of columns,
+   val = number of non-zero elements. Terms are kept in row-major order. */
+
+struct Term A[MAX], B[MAX], C[2 * MAX], T[MAX];
+int hasA = 0, hasB = 0;
+
+void sortTerms(struct Term s[])
+{
+    int i, j;
+    struct Term t;
+
+    for (i = 1; i < s[0].val; i++)
+        for (j = 1; j <= s[0].val - i; j++)
+            if (s[j].row > s[j + 1].row ||
+               (s[j].row == s[j + 1].row && s[j].col > s[j + 1].col))
+            {
+                t = s[j];
+                s[j] = s[j + 1];
+                s[j + 1] = t;
+            }
+}
+
+void readSparse(struct Term s[], char name)
+{
+    int i;
+
+    printf("Enter rows, columns and number of non-zero elements of %c: ", name);
+    scanf("%d %d %d", &s[0].row, &s[0].col, &s[0].val);
+
+    printf("Enter the %d non-zero elements as: row column value (indices start from 0)\n", s[0].val);
+
+    for (i = 1; i <= s[0].val; i++)
+        scanf("%d %d %d", &s[i].row, &s[i].col, &s[i].val);
+
+    sortTerms(s);
+}
+
+void displayTuple(struct Term s[])
+{
+    int i;
+
+    printf("   Row   Col   Value\n");
+
+    for (i = 0; i <= s[0].val; i++)
+        printf("   %-6d%-6d%d\n", s[i].row, s[i].col, s[i].val);
+}
+
+void displayMatrix(struct Term s[])
+{
+    int i, j, k = 1;
+
+    for (i = 0; i < s[0].row; i++)
+    {
+        printf("   ");
+
+        for (j = 0; j < s[0].col; j++)
+        {
+            if (k <= s[0].val && s[k].row == i && s[k].col == j)
+                printf("%-4d", s[k++].val);
+            else
+                printf("%-4d", 0);
+        }
+
+        printf("\n");
+    }
+}
+
+void show(struct Term s[], char name)
+{
+    printf("\nMatrix %c in 3-tuple form:\n", name);
+    displayTuple(s);
+
+    printf("Matrix %c in normal form:\n", name);
+    displayMatrix(s);
+}
+
+int add(struct Term a[], struct Term b[], struct Term c[])
+{
+    int i = 1, j = 1, k = 0, pa, pb, sum;
+
+    if (a[0].row != b[0].row || a[0].col != b[0].col)
+        return 0;                       /* orders differ */
+
+    while (i <= a[0].val && j <= b[0].val)
+    {
+        pa = a[i].row * a[0].col + a[i].col;
+        /* position in row-major order */
+
+        pb = b[j].row * b[0].col + b[j].col;
+
+        if (pa < pb)
+            c[++k] = a[i++];
+
+        else if (pa > pb)
+            c[++k] = b[j++];
+
+        else
+        {
+            sum = a[i].val + b[j].val;
+
+            if (sum != 0)
+            {
+                c[++k] = a[i];
+                c[k].val = sum;
+            }
+
+            i++;
+            j++;
+        }
+    }
+
+    while (i <= a[0].val)
+        c[++k] = a[i++];
+
+    while (j <= b[0].val)
+        c[++k] = b[j++];
+
+    c[0].row = a[0].row;
+    c[0].col = a[0].col;
+    c[0].val = k;
+
+    return 1;
+}
+
+void transpose(struct Term a[], struct Term t[])
+{
+    int col, i, k = 1;
+
+    t[0].row = a[0].col;
+    t[0].col = a[0].row;
+    t[0].val = a[0].val;
+
+    for (col = 0; col < a[0].col; col++)
+        /* column by column keeps row-major order */
+
+        for (i = 1; i <= a[0].val; i++)
+            if (a[i].col == col)
+            {
+                t[k].row = a[i].col;
+                t[k].col = a[i].row;
+                t[k].val = a[i].val;
+                k++;
+            }
+}
+
+int main()
+{
+    int choice, which;
+
+    do
+    {
+        printf("\n----- SPARSE MATRIX OPERATIONS -----\n");
+        printf("1. Read Sparse Matrix A\n");
+        printf("2. Read Sparse Matrix B\n");
+        printf("3. Display Matrices A and B\n");
+        printf("4. Add A and B\n");
+        printf("5. Transpose a Matrix\n");
+        printf("6. Exit\n");
+
+        printf("Enter your choice: ");
+        scanf("%d", &choice);
+
+        switch (choice)
+        {
+            case 1:
+                readSparse(A, 'A');
+                hasA = 1;
+                break;
+
+            case 2:
+                readSparse(B, 'B');
+                hasB = 1;
+                break;
+
+            case 3:
+                if (hasA)
+                    show(A, 'A');
+                else
+                    printf("Matrix A is not read yet.\n");
+
+                if (hasB)
+                    show(B, 'B');
+                else
+                    printf("Matrix B is not read yet.\n");
+
+                break;
+
+            case 4:
+                if (!hasA || !hasB)
+                {
+                    printf("Read both matrices first.\n");
+                    break;
+                }
+
+                if (add(A, B, C))
+                    show(C, 'C');
+                else
+                    printf("Addition not possible: the matrices are of different orders.\n");
+
+                break;
+
+            case 5:
+                printf("Transpose of which matrix (1 = A, 2 = B)? ");
+                scanf("%d", &which);
+
+                if (which == 1 && hasA)
+                {
+                    transpose(A, T);
+                    show(T, 'T');
+                }
+                else if (which == 2 && hasB)
+                {
+                    transpose(B, T);
+                    show(T, 'T');
+                }
+                else
+                    printf("That matrix is not available.\n");
+
+                break;
+
+            case 6:
+                printf("Exiting...\n");
+                break;
+
+            default:
+                printf("Invalid choice!\n");
+        }
+
+    } while (choice != 6);
+
+    return 0;
+}
