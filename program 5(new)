@@ -1,0 +1,238 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+struct Node
+{
+    int coef;               /* coefficient */
+    int exp;                /* power of x */
+    struct Node *next;
+};
+
+struct Node *createHeader()
+{
+    struct Node *h = (struct Node *)malloc(sizeof(struct Node));
+    h->coef = 0;
+    h->exp = -1;            /* marks the header node */
+    h->next = h;            /* circular: header points to itself when empty */
+    return h;
+}
+
+/* Insert a term keeping the powers in descending order; like powers are combined */
+void insertTerm(struct Node *h, int c, int e)
+{
+    struct Node *prev = h, *cur = h->next, *newNode;
+
+    while (cur != h && cur->exp > e)
+    {
+        prev = cur;
+        cur = cur->next;
+    }
+
+    if (cur != h && cur->exp == e)
+    {
+        cur->coef += c;
+        return;
+    }
+
+    newNode = (struct Node *)malloc(sizeof(struct Node));
+
+    newNode->coef = c;
+    newNode->exp = e;
+    newNode->next = cur;
+    prev->next = newNode;
+}
+
+/* Append a term at the end of the list (tail points to the last node) */
+struct Node *appendTerm(struct Node *h, struct Node *tail, int c, int e)
+{
+    struct Node *newNode = (struct Node *)malloc(sizeof(struct Node));
+
+    newNode->coef = c;
+    newNode->exp = e;
+    newNode->next = h;      /* last node points back to the header */
+    tail->next = newNode;
+
+    return newNode;
+}
+
+void freeTerms(struct Node *h)
+{
+    struct Node *p = h->next, *t;
+
+    while (p != h)
+    {
+        t = p;
+        p = p->next;
+        free(t);
+    }
+
+    h->next = h;
+}
+
+void readPoly(struct Node *h, char *name)
+{
+    int deg, n, i, c, e;
+
+    freeTerms(h);
+
+    printf("Enter the degree of %s: ", name);
+    scanf("%d", &deg);
+
+    printf("Enter the number of terms in %s: ", name);
+    scanf("%d", &n);
+
+    for (i = 1; i <= n; i++)
+    {
+        printf("  Term %d - coefficient and power: ", i);
+        scanf("%d %d", &c, &e);
+
+        if (e < 0 || e > deg)
+        {
+            printf("  Invalid power! It must be between 0 and %d. Re-enter.\n", deg);
+            i--;
+            continue;
+        }
+
+        insertTerm(h, c, e);
+    }
+}
+
+void display(struct Node *h, char *name)
+{
+    struct Node *p;
+    int first = 1, a;
+
+    printf("%s(x) = ", name);
+
+    for (p = h->next; p != h; p = p->next)
+    {
+        if (p->coef == 0)
+            continue;
+
+        a = (p->coef < 0) ? -p->coef : p->coef;
+
+        if (first)
+            printf("%s", (p->coef < 0) ? "-" : "");
+        else
+            printf("%s", (p->coef < 0) ? " - " : " + ");
+
+        if (p->exp == 0)
+            printf("%d", a);
+        else
+        {
+            if (a != 1)
+                printf("%d", a);
+
+            printf("x");
+
+            if (p->exp != 1)
+                printf("^%d", p->exp);
+        }
+
+        first = 0;
+    }
+
+    if (first)
+        printf("0");
+
+    printf("\n");
+}
+
+void addPoly(struct Node *p1, struct Node *p2, struct Node *sum)
+{
+    struct Node *a = p1->next, *b = p2->next, *tail = sum;
+    int s;
+
+    freeTerms(sum);
+
+    while (a != p1 && b != p2)
+    {
+        if (a->exp == b->exp)
+        {
+            s = a->coef + b->coef;
+
+            if (s != 0)
+                tail = appendTerm(sum, tail, s, a->exp);
+
+            a = a->next;
+            b = b->next;
+        }
+        else if (a->exp > b->exp)
+        {
+            tail = appendTerm(sum, tail, a->coef, a->exp);
+            a = a->next;
+        }
+        else
+        {
+            tail = appendTerm(sum, tail, b->coef, b->exp);
+            b = b->next;
+        }
+    }
+
+    while (a != p1)
+    {
+        tail = appendTerm(sum, tail, a->coef, a->exp);
+        a = a->next;
+    }
+
+    while (b != p2)
+    {
+        tail = appendTerm(sum, tail, b->coef, b->exp);
+        b = b->next;
+    }
+}
+
+int main()
+{
+    struct Node *poly1 = createHeader();
+    struct Node *poly2 = createHeader();
+    struct Node *polysum = createHeader();
+
+    int choice;
+
+    do
+    {
+        printf("\n----- POLYNOMIAL ADDITION USING SCLL WITH HEADER NODE -----\n");
+        printf("1. Read POLY1\n");
+        printf("2. Read POLY2\n");
+        printf("3. Display POLY1 and POLY2\n");
+        printf("4. Add POLY1 and POLY2 (POLYSUM)\n");
+        printf("5. Exit\n");
+
+        printf("Enter your choice: ");
+        scanf("%d", &choice);
+
+        switch (choice)
+        {
+            case 1:
+                readPoly(poly1, "POLY1");
+                break;
+
+            case 2:
+                readPoly(poly2, "POLY2");
+                break;
+
+            case 3:
+                display(poly1, "POLY1");
+                display(poly2, "POLY2");
+                break;
+
+            case 4:
+                addPoly(poly1, poly2, polysum);
+                display(poly1, "POLY1");
+                display(poly2, "POLY2");
+                display(polysum, "POLYSUM");
+                break;
+
+            case 5:
+                printf("Exiting...\n");
+                break;
+
+            default:
+                printf("Invalid choice!\n");
+        }
+
+    } while (choice != 5);
+
+    return 0;
+}
